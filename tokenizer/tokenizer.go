@@ -53,6 +53,8 @@ type Token struct {
 }
 
 func Tokenize(source string) []*Token {
+	source = removeComment(source)
+
 	tokenRegexpMap := buildTokenRegexpMap()
 	tokenRegexp := regexp.MustCompile(
 		strings.Join([]string{
@@ -117,4 +119,8 @@ func buildRegexpFromList(strs []string) string {
 	}
 
 	return strings.Join(escaped, "|")
+}
+
+func removeComment(str string) string {
+	return regexp.MustCompile(`\s*//.+\s*$`).ReplaceAllString(str, "")
 }
