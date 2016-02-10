@@ -89,8 +89,18 @@ func buildTokenRegexpMap() map[string]string {
 	}
 }
 
+var tokenTypes = []string{
+	"keyword",
+	"symbol",
+	"integerConstant",
+	"stringConstant",
+	"identifier",
+}
+
 func detectTokenType(token string) string {
-	for tokenType, regexpString := range buildTokenRegexpMap() {
+	regexpMap := buildTokenRegexpMap()
+	for _, tokenType := range tokenTypes {
+		regexpString := regexpMap[tokenType]
 		matched := regexp.MustCompile(regexpString).MatchString(token)
 		if matched {
 			return tokenType
