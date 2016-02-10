@@ -39,6 +39,10 @@ if (x < 153)
 
 func TestTokenizeCodeWithComment(t *testing.T) {
 	tokens := Tokenize(`
+/* abc abc */
+/* foo
+ * bar
+ */
 let foo=0; // foo bar
 `)
 

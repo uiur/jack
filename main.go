@@ -8,15 +8,6 @@ import (
 	"github.com/uiureo/jack/tokenizer"
 )
 
-// if (x < 153)
-// {let city="Paris";}
-
-// -> [
-//   &Token{type: "keyword", value: "if"},
-//   &Token{type: "symbol", value: "("},
-//   &Token{type: "identifier", value: "x"}
-// ]
-
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "no files given")

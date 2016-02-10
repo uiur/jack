@@ -122,5 +122,7 @@ func buildRegexpFromList(strs []string) string {
 }
 
 func removeComment(str string) string {
-	return regexp.MustCompile(`\s*//.+\s*$`).ReplaceAllString(str, "")
+	str = regexp.MustCompile(`\s*//.+\s*$`).ReplaceAllString(str, "")
+	str = regexp.MustCompile(`(?ms)/\*.*\*/`).ReplaceAllString(str, "")
+	return str
 }
