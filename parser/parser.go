@@ -3,9 +3,29 @@ package parser
 import "github.com/uiureo/jack/tokenizer"
 
 func Parse(tokens []*tokenizer.Token) *Node {
-	node, _ := parseStatement(tokens)
+	node, _ := parseStatements(tokens)
 
 	return node
+}
+
+func parseStatements(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	node := &Node{Name: "statements", Children: []*Node{}}
+
+	for {
+		statement, rest := parseStatement(tokens)
+		if statement != nil {
+			node.Children = append(node.Children, statement)
+
+			tokens = rest
+			if len(tokens) == 0 {
+				break
+			}
+		} else {
+			break
+		}
+	}
+
+	return node, tokens
 }
 
 func parseStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {

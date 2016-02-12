@@ -6,16 +6,16 @@ import (
 	"github.com/uiureo/jack/tokenizer"
 )
 
+func parse(source string) *Node {
+	return Parse(tokenizer.Tokenize(source))
+}
+
 func TestParseLetStatement(t *testing.T) {
 	tokens := tokenizer.Tokenize(`let city="Paris";`)
 	root := Parse(tokens)
 
-	if root.Name != "letStatement" {
-		t.Errorf("expect root node: letStatement, got: %v", root.Name)
-	}
-
-	if len(root.Children) == 0 {
-		t.Errorf("expect root node to have children, but got %v", root)
+	if !(root.Name == "statements" && root.Children[0].Name == "letStatement") {
+		t.Errorf("expect node to have: letStatement, but got: \n%v", root.ToXML())
 	}
 }
 
@@ -27,7 +27,18 @@ if (x > 153) {
 `)
 	root := Parse(tokens)
 
-	if root.Name != "ifStatement" {
-		t.Errorf("expect root node: ifStatement, got: %v", root.ToXML())
+	if !(root.Name == "statements" && root.Children[0].Name == "ifStatement") {
+		t.Errorf("expect node to have: ifStatement, but got: \n%v", root.ToXML())
+	}
+}
+
+func TestParseStatements(t *testing.T) {
+	root := parse(`
+let foo="foo";
+let bar="bar";
+`)
+
+	if !(root.Name == "statements" && len(root.Children) == 2) {
+		t.Errorf("expect statements, got: \n%v", root.ToXML())
 	}
 }
