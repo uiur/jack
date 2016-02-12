@@ -52,6 +52,19 @@ type Token struct {
 	Value     string
 }
 
+func (token *Token) IsOp() bool {
+	if token.TokenType != "symbol" {
+		return false
+	}
+
+	switch token.Value {
+	case "+", "-", "*", "/", "&", "|", "<", ">", "=":
+		return true
+	default:
+		return false
+	}
+}
+
 func Tokenize(source string) []*Token {
 	source = removeComment(source)
 
