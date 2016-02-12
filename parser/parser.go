@@ -64,7 +64,18 @@ func parseIfStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 
 	node.AppendToken(rest[0]) // }
 
-	return node, rest[1:]
+	rest = rest[1:]
+
+	if len(rest) > 0 && rest[0].TokenType == "keyword" && rest[0].Value == "else" {
+		node.AppendToken(rest[0])
+		node.AppendToken(rest[1]) // {
+		statements, rest := parseStatements(rest[2:])
+		node.Children = append(node.Children, statements)
+		node.AppendToken(rest[0]) // }
+		rest = rest[1:]
+	}
+
+	return node, rest
 }
 
 func parseLetStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {

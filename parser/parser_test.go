@@ -32,6 +32,33 @@ if (x > 153) {
 	}
 }
 
+func TestParseIfElseStatement(t *testing.T) {
+	root := parse(`
+if (x > 153) {
+  let city="Paris";
+} else {
+  let city="Osaka";
+}
+`)
+	statement := root.Children[0]
+
+	if !(root.Name == "statements" && statement.Name == "ifStatement") {
+		t.Errorf("expect node to have: ifStatement, but got: \n%v", root.ToXML())
+	}
+
+	found := false
+	for _, node := range statement.Children {
+		if node.Name == "keyword" && node.Value == "else" {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("expect node to have \"else\" keyword\n%v", root.ToXML())
+	}
+}
+
 func TestParseStatements(t *testing.T) {
 	root := parse(`
 let foo="foo";
