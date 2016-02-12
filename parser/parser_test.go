@@ -42,3 +42,22 @@ let bar="bar";
 		t.Errorf("expect statements, got: \n%v", root.ToXML())
 	}
 }
+
+func TestParseWhileStatement(t *testing.T) {
+	root := parse(`
+while (i > 100) {
+  let foo=0;
+}
+`)
+
+	if len(root.Children) == 0 {
+		t.Errorf("expect node to have children, but got:\n%v", root.ToXML())
+		return
+	}
+
+	statement := root.Children[0]
+
+	if statement.Name != "whileStatement" {
+		t.Errorf("expect node to have whileStatement, but got:\n%v", root.ToXML())
+	}
+}

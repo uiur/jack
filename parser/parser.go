@@ -37,6 +37,10 @@ func parseStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 		return node, rest
 	}
 
+	if node, rest := parseWhileStatement(tokens); node != nil {
+		return node, rest
+	}
+
 	return nil, tokens
 }
 
@@ -55,8 +59,8 @@ func parseIfStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node.AppendToken(rest[0]) // )
 	node.AppendToken(rest[1]) // {
 
-	statement, rest := parseStatement(rest[2:])
-	node.Children = append(node.Children, statement)
+	statements, rest := parseStatements(rest[2:])
+	node.Children = append(node.Children, statements)
 
 	node.AppendToken(rest[0]) // }
 
@@ -81,6 +85,29 @@ func parseLetStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	}
 
 	return nil, nil
+}
+
+func parseWhileStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "while") {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "whileStatement", Children: []*Node{}}
+	node.AppendToken(tokens[0]) // while
+	node.AppendToken(tokens[1]) // (
+
+	expression, rest := parseExpression(tokens[2:])
+	node.Children = append(node.Children, expression)
+
+	node.AppendToken(rest[0]) // )
+	node.AppendToken(rest[1]) // {
+
+	statements, rest := parseStatements(rest[2:])
+	node.Children = append(node.Children, statements)
+
+	node.AppendToken(rest[0]) // }
+
+	return node, rest[1:]
 }
 
 func parseExpression(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
