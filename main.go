@@ -22,7 +22,9 @@ func main() {
 	}
 
 	tokens := tokenizer.Tokenize(string(data))
-	printNode(parse(tokens))
+	tree := parse(tokens)
+
+	fmt.Print(tree.ToXML())
 }
 
 // let city="Paris";
@@ -44,6 +46,33 @@ type Node struct {
 	Children []*Node
 }
 
+func (node *Node) ToXML() string {
+	return generateXMLWithIndent(node, 0)
+}
+
+func generateXMLWithIndent(node *Node, indent int) string {
+	result := ""
+
+	spaces := ""
+	for i := 0; i < indent; i++ {
+		spaces += " "
+	}
+
+	if len(node.Value) > 0 {
+		result += fmt.Sprintf(spaces+"<%v>%v</%v>\n", node.Name, node.Value, node.Name)
+	} else {
+		result += fmt.Sprintf(spaces+"<%v>\n", node.Name)
+
+		for _, n := range node.Children {
+			result += generateXMLWithIndent(n, indent+2)
+		}
+
+		result += fmt.Sprintf(spaces+"</%v>\n", node.Name)
+	}
+
+	return result
+}
+
 func (node *Node) appendToken(token *tokenizer.Token) {
 	node.Children = append(node.Children, tokenToNode(token))
 }
@@ -52,72 +81,45 @@ func parse(tokens []*tokenizer.Token) *Node {
 	firstToken := tokens[0]
 
 	if firstToken.TokenType == "keyword" && firstToken.Value == "let" {
-		return parseLetStatement(tokens)
-	}
-
-	return nil
-}
-
-func tokenToNode(token *tokenizer.Token) *Node {
-	return &Node{Name: token.TokenType, Value: token.Value}
-}
-
-func parseLetStatement(tokens []*tokenizer.Token) *Node {
-	node := &Node{Name: "letStatement", Children: []*Node{}}
-	node.appendToken(tokens[0])
-	node.appendToken(tokens[1])
-
-	if tokens[2].TokenType == "symbol" && tokens[2].Value == "=" {
-		node.appendToken(tokens[2])
-		expression := parseExpression(tokens[3:])
-		node.Children = append(node.Children, expression)
-
-		// fmt.Println("<symbol>;</symbol>")
+		node, _ := parseLetStatement(tokens)
 		return node
 	}
 
 	return nil
 }
 
-func parseExpression(tokens []*tokenizer.Token) *Node {
+func parseLetStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	node := &Node{Name: "letStatement", Children: []*Node{}}
+	node.appendToken(tokens[0])
+	node.appendToken(tokens[1])
+
+	if tokens[2].TokenType == "symbol" && tokens[2].Value == "=" {
+		node.appendToken(tokens[2])
+		expression, rest := parseExpression(tokens[3:])
+		node.Children = append(node.Children, expression)
+		node.appendToken(rest[0])
+
+		return node, rest[1:]
+	}
+
+	return nil, nil
+}
+
+func parseExpression(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node := &Node{Name: "expression"}
-	node.Children = []*Node{parseTerm(tokens)}
-	return node
+	termNode, restTokens := parseTerm(tokens)
+	node.Children = []*Node{termNode}
+	return node, restTokens
 }
 
-func parseTerm(tokens []*tokenizer.Token) *Node {
+func parseTerm(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	if tokens[0].TokenType == "stringConstant" {
-		return &Node{Name: "term", Children: []*Node{tokenToNode(tokens[0])}}
+		node := &Node{Name: "term", Children: []*Node{tokenToNode(tokens[0])}}
+		return node, tokens[1:]
 	}
-	return nil
+	return nil, nil
 }
 
-func printNode(node *Node) {
-	printNodeWithIndent(node, 0)
-}
-
-func printNodeWithIndent(node *Node, indent int) {
-	spaces := ""
-	for i := 0; i < indent; i++ {
-		spaces += " "
-	}
-
-	if len(node.Value) > 0 {
-		fmt.Print(spaces)
-		fmt.Printf("<%v>%v</%v>\n", node.Name, node.Value, node.Name)
-	} else {
-		fmt.Print(spaces)
-		fmt.Printf("<%v>\n", node.Name)
-
-		for _, n := range node.Children {
-			printNodeWithIndent(n, indent+2)
-		}
-
-		fmt.Print(spaces)
-		fmt.Printf("</%v>\n", node.Name)
-	}
-}
-
-func printToken(token *tokenizer.Token) {
-	fmt.Printf("<%s>%s</%s>\n", token.TokenType, token.Value, token.TokenType)
+func tokenToNode(token *tokenizer.Token) *Node {
+	return &Node{Name: token.TokenType, Value: token.Value}
 }
