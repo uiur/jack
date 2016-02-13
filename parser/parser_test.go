@@ -104,5 +104,4 @@ func TestParseDoStatement(t *testing.T) {
 	if statement.Name != "doStatement" {
 		t.Errorf("expect node to have whileStatement, but got:\n%v", root.ToXML())
 	}
-
 }

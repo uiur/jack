@@ -48,6 +48,12 @@ func parseStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	return nil, tokens
 }
 
+func expect(token *tokenizer.Token, tokenType, value string) {
+	if !(token.TokenType == tokenType && token.Value == value) {
+		panic("unexpected token `" + token.Value + "`, expecting `" + value + "`")
+	}
+}
+
 func parseIfStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "if") {
 		return nil, tokens
@@ -55,27 +61,38 @@ func parseIfStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 
 	node := &Node{Name: "ifStatement", Children: []*Node{}}
 	node.AppendToken(tokens[0]) // if
+
+	expect(tokens[1], "symbol", "(")
 	node.AppendToken(tokens[1]) // (
 
 	expression, rest := parseExpression(tokens[2:])
 	node.Children = append(node.Children, expression)
 
+	expect(rest[0], "symbol", ")")
 	node.AppendToken(rest[0]) // )
+	expect(rest[1], "symbol", "{")
 	node.AppendToken(rest[1]) // {
 
 	statements, rest := parseStatements(rest[2:])
 	node.Children = append(node.Children, statements)
 
+	expect(rest[0], "symbol", "}")
 	node.AppendToken(rest[0]) // }
 
 	rest = rest[1:]
 
 	if len(rest) > 0 && rest[0].TokenType == "keyword" && rest[0].Value == "else" {
 		node.AppendToken(rest[0])
-		node.AppendToken(rest[1]) // {
+
+		expect(rest[1], "symbol", "{")
+		node.AppendToken(rest[1])
+
 		statements, rest := parseStatements(rest[2:])
 		node.Children = append(node.Children, statements)
-		node.AppendToken(rest[0]) // }
+
+		expect(rest[0], "symbol", "}")
+		node.AppendToken(rest[0])
+
 		rest = rest[1:]
 	}
 
@@ -109,18 +126,24 @@ func parseWhileStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) 
 
 	node := &Node{Name: "whileStatement", Children: []*Node{}}
 	node.AppendToken(tokens[0]) // while
-	node.AppendToken(tokens[1]) // (
+
+	expect(tokens[1], "symbol", "(")
+	node.AppendToken(tokens[1])
 
 	expression, rest := parseExpression(tokens[2:])
 	node.Children = append(node.Children, expression)
 
-	node.AppendToken(rest[0]) // )
-	node.AppendToken(rest[1]) // {
+	expect(rest[0], "symbol", ")")
+	node.AppendToken(rest[0])
+
+	expect(rest[1], "symbol", "{")
+	node.AppendToken(rest[1])
 
 	statements, rest := parseStatements(rest[2:])
 	node.Children = append(node.Children, statements)
 
-	node.AppendToken(rest[0]) // }
+	expect(rest[0], "symbol", "}")
+	node.AppendToken(rest[0])
 
 	return node, rest[1:]
 }
@@ -132,9 +155,12 @@ func parseDoStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 
 	node := &Node{Name: "doStatement", Children: []*Node{}}
 	node.AppendToken(tokens[0]) // do
+
 	subroutineCall, rest := parseSubroutineCall(tokens[1:])
 	node.Children = append(node.Children, subroutineCall)
-	node.AppendToken(rest[0]) // ;
+
+	expect(rest[0], "symbol", ";")
+	node.AppendToken(rest[0])
 
 	return node, rest[1:]
 }
@@ -199,10 +225,15 @@ func parseSubroutineCall(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) 
 	if tokens[0].TokenType == "identifier" {
 		node := &Node{Name: "subroutineCall", Children: []*Node{}}
 		node.AppendToken(tokens[0])
+
+		expect(tokens[1], "symbol", "(")
 		node.AppendToken(tokens[1]) // (
+
 		expression, rest := parseExpressionList(tokens[2:])
 		node.Children = append(node.Children, expression)
-		node.AppendToken(rest[0]) // )
+
+		expect(rest[0], "symbol", ")")
+		node.AppendToken(rest[0])
 
 		return node, rest[1:]
 	}
