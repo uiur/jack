@@ -45,6 +45,10 @@ func parseStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 		return node, rest
 	}
 
+	if node, rest := parseReturnStatement(tokens); node != nil {
+		return node, rest
+	}
+
 	return nil, tokens
 }
 
@@ -163,6 +167,23 @@ func parseDoStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node.AppendToken(rest[0])
 
 	return node, rest[1:]
+}
+
+func parseReturnStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "return") {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "returnStatement", Children: []*Node{}}
+
+	expression, tokens := parseExpression(tokens[1:])
+	if expression != nil {
+		node.Children = append(node.Children, expression)
+	}
+	expect(tokens[0], "symbol", ";")
+	node.AppendToken(tokens[0])
+
+	return node, tokens[1:]
 }
 
 func parseExpression(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {

@@ -105,3 +105,18 @@ func TestParseDoStatement(t *testing.T) {
 		t.Errorf("expect node to have whileStatement, but got:\n%v", root.ToXML())
 	}
 }
+
+func TestParseReturnStatement(t *testing.T) {
+	root := parse(`return 1 + 2;`)
+
+	if len(root.Children) == 0 {
+		t.Errorf("expect node to have children, but got:\n%v", root.ToXML())
+		return
+	}
+
+	statement := root.Children[0]
+
+	if statement.Name != "returnStatement" {
+		t.Errorf("expect node to have whileStatement, but got:\n%v", root.ToXML())
+	}
+}
