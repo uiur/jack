@@ -41,6 +41,10 @@ func parseStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 		return node, rest
 	}
 
+	if node, rest := parseDoStatement(tokens); node != nil {
+		return node, rest
+	}
+
 	return nil, tokens
 }
 
@@ -121,6 +125,20 @@ func parseWhileStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) 
 	return node, rest[1:]
 }
 
+func parseDoStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "do") {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "doStatement", Children: []*Node{}}
+	node.AppendToken(tokens[0]) // do
+	subroutineCall, rest := parseSubroutineCall(tokens[1:])
+	node.Children = append(node.Children, subroutineCall)
+	node.AppendToken(rest[0]) // ;
+
+	return node, rest[1:]
+}
+
 func parseExpression(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node := &Node{Name: "expression"}
 
@@ -142,11 +160,51 @@ func parseExpression(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	return node, restTokens
 }
 
+func parseExpressionList(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if tokens[0].TokenType == "symbol" && tokens[0].Value == ")" {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "expressionList", Children: []*Node{}}
+
+	expression, rest := parseExpression(tokens)
+	node.Children = append(node.Children, expression)
+
+	for {
+		if rest[0].TokenType == "symbol" && rest[0].Value == "," {
+			node.AppendToken(rest[0])
+			expression, tokens := parseExpression(rest[1:])
+			node.Children = append(node.Children, expression)
+
+			rest = tokens
+		} else {
+			break
+		}
+	}
+
+	return node, rest
+}
+
 func parseTerm(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	switch tokens[0].TokenType {
 	case "stringConstant", "integerConstant", "identifier":
 		node := &Node{Name: "term", Children: []*Node{tokenToNode(tokens[0])}}
 		return node, tokens[1:]
+	}
+
+	return nil, tokens
+}
+
+func parseSubroutineCall(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if tokens[0].TokenType == "identifier" {
+		node := &Node{Name: "subroutineCall", Children: []*Node{}}
+		node.AppendToken(tokens[0])
+		node.AppendToken(tokens[1]) // (
+		expression, rest := parseExpressionList(tokens[2:])
+		node.Children = append(node.Children, expression)
+		node.AppendToken(rest[0]) // )
+
+		return node, rest[1:]
 	}
 
 	return nil, tokens
