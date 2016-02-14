@@ -3,9 +3,107 @@ package parser
 import "github.com/uiureo/jack/tokenizer"
 
 func Parse(tokens []*tokenizer.Token) *Node {
-	node, _ := ParseStatements(tokens)
+	node, _ := parseClass(tokens)
 
 	return node
+}
+
+func parseClass(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "class") {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "class", Children: []*Node{}}
+	node.AppendToken(tokens[0])
+
+	expect(tokens[1], "identifier", "")
+	node.AppendToken(tokens[1])
+
+	expect(tokens[2], "symbol", "{")
+	node.AppendToken(tokens[2])
+
+	tokens = tokens[3:]
+	for {
+		subroutineDec, rest := parseSubroutineDec(tokens)
+
+		if subroutineDec == nil {
+			break
+		}
+
+		node.Children = append(node.Children, subroutineDec)
+		tokens = rest
+	}
+
+	expect(tokens[0], "symbol", "}")
+	node.AppendToken(tokens[0])
+
+	return node, tokens[1:]
+}
+
+func parseSubroutineDec(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "function") {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "subroutineDec", Children: []*Node{}}
+	node.AppendToken(tokens[0])
+	node.AppendToken(tokens[1])
+
+	expect(tokens[2], "identifier", "")
+	node.AppendToken(tokens[2])
+
+	expect(tokens[3], "symbol", "(")
+	node.AppendToken(tokens[3])
+
+	expect(tokens[4], "symbol", ")")
+	node.AppendToken(tokens[4])
+
+	expect(tokens[5], "symbol", "{")
+	node.AppendToken(tokens[5])
+
+	tokens = tokens[6:]
+
+	for {
+		varDec, rest := parseVarDec(tokens)
+		if varDec == nil {
+			break
+		}
+
+		node.Children = append(node.Children, varDec)
+		tokens = rest
+	}
+
+	statements, tokens := ParseStatements(tokens)
+	node.Children = append(node.Children, statements)
+
+	expect(tokens[0], "symbol", "}")
+	node.AppendToken(tokens[0])
+
+	tokens = tokens[1:]
+
+	return node, tokens
+}
+
+func parseVarDec(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "var") {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "varDec", Children: []*Node{}}
+	node.AppendToken(tokens[0])
+
+	if !tokens[1].IsType() {
+		panic("unexpected token `" + tokens[1].Value + "`, expecting type")
+	}
+	node.AppendToken(tokens[1])
+
+	expect(tokens[2], "identifier", "")
+	node.AppendToken(tokens[2])
+
+	expect(tokens[3], "symbol", ";")
+	node.AppendToken(tokens[3])
+
+	return node, tokens[4:]
 }
 
 func ParseStatements(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
@@ -53,8 +151,14 @@ func parseStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 }
 
 func expect(token *tokenizer.Token, tokenType, value string) {
-	if !(token.TokenType == tokenType && token.Value == value) {
-		panic("unexpected token `" + token.Value + "`, expecting `" + value + "`")
+	if len(value) == 0 {
+		if token.TokenType != tokenType {
+			panic("unexpected token `" + token.TokenType + "`, expecting `" + tokenType + "`")
+		}
+	} else {
+		if !(token.TokenType == tokenType && token.Value == value) {
+			panic("unexpected token `" + token.Value + "`, expecting `" + value + "`")
+		}
 	}
 }
 
@@ -111,16 +215,15 @@ func parseLetStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node.AppendToken(tokens[0])
 	node.AppendToken(tokens[1])
 
-	if tokens[2].TokenType == "symbol" && tokens[2].Value == "=" {
-		node.AppendToken(tokens[2])
-		expression, rest := parseExpression(tokens[3:])
-		node.Children = append(node.Children, expression)
-		node.AppendToken(rest[0])
+	expect(tokens[2], "symbol", "=")
+	node.AppendToken(tokens[2])
+	expression, rest := parseExpression(tokens[3:])
+	node.Children = append(node.Children, expression)
 
-		return node, rest[1:]
-	}
+	expect(rest[0], "symbol", ";")
+	node.AppendToken(rest[0])
 
-	return nil, nil
+	return node, rest[1:]
 }
 
 func parseWhileStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
@@ -187,9 +290,12 @@ func parseReturnStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token)
 }
 
 func parseExpression(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
-	node := &Node{Name: "expression"}
-
 	termNode, restTokens := parseTerm(tokens)
+	if termNode == nil {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "expression"}
 	node.Children = []*Node{termNode}
 
 	for {
@@ -234,7 +340,25 @@ func parseExpressionList(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) 
 
 func parseTerm(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	switch tokens[0].TokenType {
-	case "stringConstant", "integerConstant", "identifier":
+	case "stringConstant", "integerConstant":
+		node := &Node{Name: "term", Children: []*Node{tokenToNode(tokens[0])}}
+		return node, tokens[1:]
+
+	case "keyword":
+		node := &Node{Name: "term", Children: []*Node{}}
+		node.AppendToken(tokens[0])
+
+		return node, tokens[1:]
+	}
+
+	subroutineCall, tokens := parseSubroutineCall(tokens)
+
+	if subroutineCall != nil {
+		node := &Node{Name: "term", Children: []*Node{subroutineCall}}
+		return node, tokens
+	}
+
+	if tokens[0].TokenType == "identifier" {
 		node := &Node{Name: "term", Children: []*Node{tokenToNode(tokens[0])}}
 		return node, tokens[1:]
 	}
@@ -243,23 +367,38 @@ func parseTerm(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 }
 
 func parseSubroutineCall(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
-	if tokens[0].TokenType == "identifier" {
-		node := &Node{Name: "subroutineCall", Children: []*Node{}}
-		node.AppendToken(tokens[0])
-
-		expect(tokens[1], "symbol", "(")
-		node.AppendToken(tokens[1]) // (
-
-		expression, rest := parseExpressionList(tokens[2:])
-		node.Children = append(node.Children, expression)
-
-		expect(rest[0], "symbol", ")")
-		node.AppendToken(rest[0])
-
-		return node, rest[1:]
+	if tokens[0].TokenType != "identifier" {
+		return nil, tokens
 	}
 
-	return nil, tokens
+	if !((tokens[1].TokenType == "symbol" && tokens[1].Value == "(") || (tokens[1].TokenType == "symbol" && tokens[1].Value == ".")) {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "subroutineCall", Children: []*Node{}}
+	node.AppendToken(tokens[0])
+
+	tokens = tokens[1:]
+
+	if tokens[0].TokenType == "symbol" && tokens[0].Value == "." {
+		node.AppendToken(tokens[0])
+		expect(tokens[1], "identifier", "") // subroutineName
+		node.AppendToken(tokens[1])
+		tokens = tokens[2:]
+	}
+
+	expect(tokens[0], "symbol", "(")
+	node.AppendToken(tokens[0])
+
+	expression, rest := parseExpressionList(tokens[1:])
+	if expression != nil {
+		node.Children = append(node.Children, expression)
+	}
+
+	expect(rest[0], "symbol", ")")
+	node.AppendToken(rest[0])
+
+	return node, rest[1:]
 }
 
 func tokenToNode(token *tokenizer.Token) *Node {

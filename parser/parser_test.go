@@ -12,7 +12,10 @@ func parse(source string) *Node {
 }
 
 func TestParseLetStatement(t *testing.T) {
-	root := parse(`let city="Paris";`)
+	root := parse(`
+    let city = "Paris";
+    let bar = Foo.new();
+  `)
 
 	if !(root.Name == "statements" && root.Children[0].Name == "letStatement") {
 		t.Errorf("expect node to have: letStatement, but got: \n%v", root.ToXML())

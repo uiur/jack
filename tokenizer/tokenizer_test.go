@@ -44,6 +44,7 @@ func TestTokenizeCodeWithComment(t *testing.T) {
  * bar
  */
 let foo=0; // foo bar
+// foo bar
 `)
 
 	expected := [][]string{

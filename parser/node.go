@@ -22,6 +22,9 @@ func (node *Node) AppendToken(token *tokenizer.Token) {
 }
 
 func generateXMLWithIndent(node *Node, indent int) string {
+	if node == nil {
+		return "nil"
+	}
 	result := ""
 
 	spaces := ""

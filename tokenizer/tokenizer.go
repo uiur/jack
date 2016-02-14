@@ -65,6 +65,30 @@ func (token *Token) IsOp() bool {
 	}
 }
 
+func (token *Token) IsType() bool {
+	switch token.TokenType {
+	case "keyword":
+		return token.Value == "int" || token.Value == "char" || token.Value == "boolean"
+	case "identifier":
+		return true
+	default:
+		return false
+	}
+}
+
+func (token *Token) IsKeywordConstant() bool {
+	if token.TokenType != "keyword" {
+		return false
+	}
+
+	switch token.Value {
+	case "true", "false", "null", "this":
+		return true
+	default:
+		return false
+	}
+}
+
 func Tokenize(source string) []*Token {
 	source = removeComment(source)
 
@@ -135,7 +159,7 @@ func buildRegexpFromList(strs []string) string {
 }
 
 func removeComment(str string) string {
-	str = regexp.MustCompile(`\s*//.+\s*$`).ReplaceAllString(str, "")
-	str = regexp.MustCompile(`(?ms)/\*.*\*/`).ReplaceAllString(str, "")
+	str = regexp.MustCompile(`(?m)\s*//.+$`).ReplaceAllString(str, "")
+	str = regexp.MustCompile(`(?ms)/\*.*?\*/`).ReplaceAllString(str, "")
 	return str
 }
