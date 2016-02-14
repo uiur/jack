@@ -65,6 +65,10 @@ func (token *Token) IsOp() bool {
 	}
 }
 
+func (token *Token) IsUnaryOp() bool {
+	return token.TokenType == "symbol" && (token.Value == "-" || token.Value == "~")
+}
+
 func (token *Token) IsType() bool {
 	switch token.TokenType {
 	case "keyword":

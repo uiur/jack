@@ -398,15 +398,15 @@ func parseExpression(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node.Children = []*Node{termNode}
 
 	for {
-		if restTokens[0].IsOp() {
-			node.AppendToken(restTokens[0])
-			termNode, rest := parseTerm(restTokens[1:])
-			node.Children = append(node.Children, termNode)
-
-			restTokens = rest
-		} else {
+		if !(len(restTokens) > 0 && restTokens[0].IsOp()) {
 			break
 		}
+
+		node.AppendToken(restTokens[0])
+		termNode, rest := parseTerm(restTokens[1:])
+		node.Children = append(node.Children, termNode)
+
+		restTokens = rest
 	}
 
 	return node, restTokens
@@ -457,9 +457,50 @@ func parseTerm(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 		return node, tokens
 	}
 
+	// varName | varName[expression]
 	if tokens[0].TokenType == "identifier" {
 		node := &Node{Name: "term", Children: []*Node{tokenToNode(tokens[0])}}
-		return node, tokens[1:]
+		tokens = tokens[1:]
+		if len(tokens) > 0 && tokens[0].TokenType == "symbol" && tokens[0].Value == "[" {
+			node.AppendToken(tokens[0])
+
+			expression, rest := parseExpression(tokens[1:])
+			node.AppendChild(expression)
+
+			expect(rest[0], "symbol", "]")
+			node.AppendToken(rest[0])
+
+			tokens = rest[1:]
+		}
+
+		return node, tokens
+	}
+
+	// ( expression )
+	if tokens[0].TokenType == "symbol" && tokens[0].Value == "(" {
+		node := &Node{Name: "term", Children: []*Node{}}
+		node.AppendToken(tokens[0])
+
+		expression, tokens := parseExpression(tokens[1:])
+		node.AppendChild(expression)
+
+		expect(tokens[0], "symbol", ")")
+		node.AppendToken(tokens[0])
+
+		tokens = tokens[1:]
+
+		return node, tokens
+	}
+
+	// unaryOp term
+	if tokens[0].IsUnaryOp() {
+		node := &Node{Name: "term", Children: []*Node{}}
+		node.AppendToken(tokens[0])
+
+		expression, tokens := parseExpression(tokens[1:])
+		node.AppendChild(expression)
+
+		return node, tokens
 	}
 
 	return nil, tokens
@@ -467,6 +508,10 @@ func parseTerm(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 
 func parseSubroutineCall(tokens []*tokenizer.Token) ([]*Node, []*tokenizer.Token) {
 	if tokens[0].TokenType != "identifier" {
+		return []*Node{}, tokens
+	}
+
+	if len(tokens) <= 2 {
 		return []*Node{}, tokens
 	}
 

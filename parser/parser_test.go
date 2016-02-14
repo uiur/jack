@@ -150,6 +150,30 @@ func TestParseClass(t *testing.T) {
 	}
 }
 
+func TestParseTerm(t *testing.T) {
+	testParseTermSuccess(t, `42`)
+	testParseTermSuccess(t, `"foo"`)
+	testParseTermSuccess(t, `null`)
+	testParseTermSuccess(t, `bar`)
+	testParseTermSuccess(t, `foo[1+2]`)
+	testParseTermSuccess(t, `(1 + 2)`)
+	testParseTermSuccess(t, `-123`)
+}
+
+func testParseTermSuccess(t *testing.T, source string) (*Node, []*tokenizer.Token) {
+	root, tokens := parseTerm(tokenizer.Tokenize(source))
+
+	if len(tokens) > 0 {
+		t.Errorf("`%s`: expect len(tokens) == 0, but actual: %v", source, len(tokens))
+	}
+
+	if root.Name != "term" {
+		t.Errorf("`%s`: expect node to be term, but actual: %s", source, root.ToXML())
+	}
+
+	return root, tokens
+}
+
 func TestParseClassWithField(t *testing.T) {
 	root, tokens := parseClass(tokenizer.Tokenize(`
 		class Main {
