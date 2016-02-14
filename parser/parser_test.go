@@ -7,12 +7,12 @@ import (
 )
 
 func parse(source string) *Node {
-	return Parse(tokenizer.Tokenize(source))
+	node, _ := ParseStatements(tokenizer.Tokenize(source))
+	return node
 }
 
 func TestParseLetStatement(t *testing.T) {
-	tokens := tokenizer.Tokenize(`let city="Paris";`)
-	root := Parse(tokens)
+	root := parse(`let city="Paris";`)
 
 	if !(root.Name == "statements" && root.Children[0].Name == "letStatement") {
 		t.Errorf("expect node to have: letStatement, but got: \n%v", root.ToXML())
@@ -20,12 +20,11 @@ func TestParseLetStatement(t *testing.T) {
 }
 
 func TestParseIfStatement(t *testing.T) {
-	tokens := tokenizer.Tokenize(`
+	root := parse(`
 if (x > 153) {
   let city="Paris";
 }
 `)
-	root := Parse(tokens)
 
 	if !(root.Name == "statements" && root.Children[0].Name == "ifStatement") {
 		t.Errorf("expect node to have: ifStatement, but got: \n%v", root.ToXML())

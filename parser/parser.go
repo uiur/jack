@@ -3,12 +3,12 @@ package parser
 import "github.com/uiureo/jack/tokenizer"
 
 func Parse(tokens []*tokenizer.Token) *Node {
-	node, _ := parseStatements(tokens)
+	node, _ := ParseStatements(tokens)
 
 	return node
 }
 
-func parseStatements(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+func ParseStatements(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node := &Node{Name: "statements", Children: []*Node{}}
 
 	for {
@@ -77,7 +77,7 @@ func parseIfStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	expect(rest[1], "symbol", "{")
 	node.AppendToken(rest[1]) // {
 
-	statements, rest := parseStatements(rest[2:])
+	statements, rest := ParseStatements(rest[2:])
 	node.Children = append(node.Children, statements)
 
 	expect(rest[0], "symbol", "}")
@@ -91,7 +91,7 @@ func parseIfStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 		expect(rest[1], "symbol", "{")
 		node.AppendToken(rest[1])
 
-		statements, rest := parseStatements(rest[2:])
+		statements, rest := ParseStatements(rest[2:])
 		node.Children = append(node.Children, statements)
 
 		expect(rest[0], "symbol", "}")
@@ -143,7 +143,7 @@ func parseWhileStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) 
 	expect(rest[1], "symbol", "{")
 	node.AppendToken(rest[1])
 
-	statements, rest := parseStatements(rest[2:])
+	statements, rest := ParseStatements(rest[2:])
 	node.Children = append(node.Children, statements)
 
 	expect(rest[0], "symbol", "}")
