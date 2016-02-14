@@ -22,6 +22,18 @@ func TestParseLetStatement(t *testing.T) {
 	}
 }
 
+func TestParseLetStatementWithArrayIndex(t *testing.T) {
+	node, tokens := parseLetStatement(tokenizer.Tokenize(`let a[2]="foo";`))
+
+	if node.Name != "letStatement" {
+		t.Errorf("expect: letStatement, actual: %v", node.ToXML())
+	}
+
+	if len(tokens) > 0 {
+		t.Error("parse failed")
+	}
+}
+
 func TestParseIfStatement(t *testing.T) {
 	root := parse(`
 if (x > 153) {
@@ -214,5 +226,17 @@ func TestParseClassWithMethod(t *testing.T) {
 
 	if len(tokens) > 0 {
 		t.Errorf("expect len(tokens) == 0, but actual: %v", len(tokens))
+	}
+}
+
+func TestParseVarDec(t *testing.T) {
+	node, tokens := parseVarDec(tokenizer.Tokenize(`var int i, sum;`))
+
+	if node.Name != "varDec" {
+		t.Errorf("expect Name:`varDec` but actual: %v", node.Name)
+	}
+
+	if len(tokens) > 0 {
+		t.Error("parse fails")
 	}
 }

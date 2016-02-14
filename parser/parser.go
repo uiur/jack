@@ -196,10 +196,23 @@ func parseVarDec(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	expect(tokens[2], "identifier", "")
 	node.AppendToken(tokens[2])
 
-	expect(tokens[3], "symbol", ";")
-	node.AppendToken(tokens[3])
+	tokens = tokens[3:]
+	for {
+		if !(tokens[0].TokenType == "symbol" && tokens[0].Value == ",") {
+			break
+		}
 
-	return node, tokens[4:]
+		node.AppendToken(tokens[0])
+		expect(tokens[1], "identifier", "")
+		node.AppendToken(tokens[1])
+
+		tokens = tokens[2:]
+	}
+
+	expect(tokens[0], "symbol", ";")
+	node.AppendToken(tokens[0])
+
+	return node, tokens[1:]
 }
 
 func ParseStatements(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
@@ -309,11 +322,26 @@ func parseLetStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	}
 	node := &Node{Name: "letStatement", Children: []*Node{}}
 	node.AppendToken(tokens[0])
+
+	expect(tokens[1], "identifier", "")
 	node.AppendToken(tokens[1])
 
-	expect(tokens[2], "symbol", "=")
-	node.AppendToken(tokens[2])
-	expression, rest := parseExpression(tokens[3:])
+	tokens = tokens[2:]
+	if tokens[0].TokenType == "symbol" && tokens[0].Value == "[" {
+		node.AppendToken(tokens[0])
+
+		expression, rest := parseExpression(tokens[1:])
+		node.AppendChild(expression)
+
+		expect(rest[0], "symbol", "]")
+		node.AppendToken(rest[0])
+
+		tokens = rest[1:]
+	}
+
+	expect(tokens[0], "symbol", "=")
+	node.AppendToken(tokens[0])
+	expression, rest := parseExpression(tokens[1:])
 	node.Children = append(node.Children, expression)
 
 	expect(rest[0], "symbol", ";")
