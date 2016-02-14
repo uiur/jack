@@ -12,8 +12,14 @@ import (
 const toolPath = "/Users/zat/Downloads/nand2tetris/tools/TextComparer.sh"
 
 func TestMain(t *testing.T) {
-	jackFile := "fixtures/Main.jack"
-	testMainOutput(t, jackFile)
+	files, err := filepath.Glob("fixtures/*.jack")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, jackFile := range files {
+		testMainOutput(t, jackFile)
+	}
 }
 
 func testMainOutput(t *testing.T, jackFile string) {
@@ -21,9 +27,10 @@ func testMainOutput(t *testing.T, jackFile string) {
 
 	name := strings.Split(filepath.Base(jackFile), ".")[0]
 
-	output, err := exec.Command("go", "run", "main.go", jackFile).Output()
+	output, err := exec.Command("go", "run", "main.go", jackFile).CombinedOutput()
 	if err != nil {
-		t.Error(err)
+		t.Errorf("%s: %s %v", name, output, err)
+		return
 	}
 
 	file, _ := ioutil.TempFile("", "")
@@ -32,6 +39,6 @@ func testMainOutput(t *testing.T, jackFile string) {
 	output, err = exec.Command(toolPath, file.Name(), xmlFile).CombinedOutput()
 
 	if err != nil {
-		t.Errorf("%s: %v %v", name, output, err)
+		t.Errorf("%s: %s %v", name, output, err)
 	}
 }
