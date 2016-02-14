@@ -1,6 +1,10 @@
 package parser
 
-import "github.com/uiureo/jack/tokenizer"
+import (
+	"fmt"
+
+	"github.com/uiureo/jack/tokenizer"
+)
 
 func Parse(tokens []*tokenizer.Token) *Node {
 	node, _ := parseClass(tokens)
@@ -23,6 +27,17 @@ func parseClass(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	node.AppendToken(tokens[2])
 
 	tokens = tokens[3:]
+
+	for {
+		classVarDec, rest := parseClassVarDec(tokens)
+		if classVarDec == nil {
+			break
+		}
+
+		node.AppendChild(classVarDec)
+		tokens = rest
+	}
+
 	for {
 		subroutineDec, rest := parseSubroutineDec(tokens)
 
@@ -35,6 +50,42 @@ func parseClass(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 	}
 
 	expect(tokens[0], "symbol", "}")
+	node.AppendToken(tokens[0])
+
+	return node, tokens[1:]
+}
+
+func parseClassVarDec(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
+	if !(tokens[0].TokenType == "keyword" && (tokens[0].Value == "static" || tokens[0].Value == "field")) {
+		return nil, tokens
+	}
+
+	node := &Node{Name: "classVarDec", Children: []*Node{}}
+	node.AppendToken(tokens[0])
+
+	if !tokens[1].IsType() {
+		panic(fmt.Sprintf("unexpected token `%s`, expecting type token", tokens[1].TokenType))
+	}
+	node.AppendToken(tokens[1])
+
+	expect(tokens[2], "identifier", "")
+	node.AppendToken(tokens[2])
+
+	tokens = tokens[3:]
+	for {
+		if !(tokens[0].TokenType == "symbol" && tokens[0].Value == ",") {
+			break
+		}
+
+		node.AppendToken(tokens[0])
+
+		expect(tokens[1], "identifier", "")
+		node.AppendToken(tokens[1])
+
+		tokens = tokens[2:]
+	}
+
+	expect(tokens[0], "symbol", ";")
 	node.AppendToken(tokens[0])
 
 	return node, tokens[1:]
