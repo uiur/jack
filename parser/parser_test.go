@@ -162,11 +162,29 @@ func TestParseClassWithField(t *testing.T) {
 		}
 	`))
 
-	if root.Name != "class" {
-		t.Errorf("expect node `<class>`, but got:\n%v", root.ToXML())
+	if node, _ := root.Find(&Node{Name: "classVarDec"}); node == nil {
+		t.Errorf("expect node to have classVarDec, but got:\n%v", root.ToXML())
 	}
 
-	if node, _ := root.Find(&Node{Name: "classVarDec"}); node == nil {
+	if len(tokens) > 0 {
+		t.Errorf("expect len(tokens) == 0, but actual: %v", len(tokens))
+	}
+}
+
+func TestParseClassWithMethod(t *testing.T) {
+	root, tokens := parseClass(tokenizer.Tokenize(`
+		class Foo {
+			constructor Foo new() {
+				return;
+			}
+
+			method boolean bar() {
+				return true;
+			}
+		}
+	`))
+
+	if node, _ := root.Find(&Node{Name: "subroutineDec"}); node == nil {
 		t.Errorf("expect node to have classVarDec, but got:\n%v", root.ToXML())
 	}
 

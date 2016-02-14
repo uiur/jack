@@ -92,13 +92,13 @@ func parseClassVarDec(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 }
 
 func parseSubroutineDec(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
-	if !(tokens[0].TokenType == "keyword" && tokens[0].Value == "function") {
+	if !(tokens[0].TokenType == "keyword" && (tokens[0].Value == "constructor" || tokens[0].Value == "function" || tokens[0].Value == "method")) {
 		return nil, tokens
 	}
 
 	node := &Node{Name: "subroutineDec", Children: []*Node{}}
 	node.AppendToken(tokens[0])
-	node.AppendToken(tokens[1])
+	node.AppendToken(tokens[1]) // "void" || identifier
 
 	expect(tokens[2], "identifier", "")
 	node.AppendToken(tokens[2])
