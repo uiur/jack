@@ -148,7 +148,7 @@ func detectTokenType(token string) string {
 	regexpMap := buildTokenRegexpMap()
 	for _, tokenType := range tokenTypes {
 		regexpString := regexpMap[tokenType]
-		matched := regexp.MustCompile(regexpString).MatchString(token)
+		matched := regexp.MustCompile(`^(` + regexpString + `)$`).MatchString(token)
 		if matched {
 			return tokenType
 		}

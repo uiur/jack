@@ -24,6 +24,10 @@ if (x < 153)
 {let city="Paris";}
 `)
 
+	testTokensMatch(t, tokens, expected)
+}
+
+func testTokensMatch(t *testing.T, tokens []*Token, expected [][]string) {
 	if len(tokens) != len(expected) {
 		t.Errorf("expect length: %d, got %d", len(tokens), len(expected))
 		t.FailNow()
@@ -35,6 +39,24 @@ if (x < 153)
 			t.Errorf("expect {type: %s, value: %s}, got {type: %s, value: %s}", expectedToken[1], expectedToken[0], token.TokenType, token.Value)
 		}
 	}
+}
+
+func TestTokenizeSubroutineCall(t *testing.T) {
+	tokens := Tokenize(`
+		do Output.printString();
+	`)
+
+	expected := [][]string{
+		{"do", "keyword"},
+		{"Output", "identifier"},
+		{".", "symbol"},
+		{"printString", "identifier"},
+		{"(", "symbol"},
+		{")", "symbol"},
+		{";", "symbol"},
+	}
+
+	testTokensMatch(t, tokens, expected)
 }
 
 func TestTokenizeCodeWithComment(t *testing.T) {

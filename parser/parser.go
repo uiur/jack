@@ -262,7 +262,7 @@ func parseStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 func expect(token *tokenizer.Token, tokenType, value string) {
 	if len(value) == 0 {
 		if token.TokenType != tokenType {
-			panic("unexpected token `" + token.TokenType + "`, expecting `" + tokenType + "`")
+			panic("unexpected token `" + token.TokenType + "." + token.Value + "`, expecting `" + tokenType + "`")
 		}
 	} else {
 		if !(token.TokenType == tokenType && token.Value == value) {
