@@ -21,6 +21,13 @@ func (node *Node) AppendToken(token *tokenizer.Token) {
 	node.Children = append(node.Children, tokenToNode(token))
 }
 
+func (node *Node) AppendChild(n *Node) {
+	if n == nil {
+		panic("node must not be nil")
+	}
+	node.Children = append(node.Children, n)
+}
+
 func generateXMLWithIndent(node *Node, indent int) string {
 	if node == nil {
 		return "nil"
