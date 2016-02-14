@@ -21,11 +21,21 @@ func (node *Node) AppendToken(token *tokenizer.Token) {
 	node.Children = append(node.Children, tokenToNode(token))
 }
 
-func (node *Node) AppendChild(n *Node) {
-	if n == nil {
+func (n *Node) AppendChild(node *Node) {
+	if node == nil {
 		panic("node must not be nil")
 	}
-	node.Children = append(node.Children, n)
+	n.Children = append(n.Children, node)
+}
+
+func (n *Node) Find(node *Node) (*Node, int) {
+	for i, childNode := range n.Children {
+		if childNode.Name == node.Name && (len(node.Value) == 0 || childNode.Value == node.Value) {
+			return childNode, i
+		}
+	}
+
+	return nil, 0
 }
 
 func generateXMLWithIndent(node *Node, indent int) string {

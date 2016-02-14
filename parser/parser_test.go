@@ -122,3 +122,30 @@ func TestParseReturnStatement(t *testing.T) {
 		t.Errorf("expect node to have whileStatement, but got:\n%v", root.ToXML())
 	}
 }
+
+func TestParseClass(t *testing.T) {
+	root, tokens := parseClass(tokenizer.Tokenize(`
+		class Main {
+			function void main() {
+				return;
+			}
+		}
+	`))
+
+	if root.Name != "class" {
+		t.Errorf("expect node `<class>`, but got:\n%v", root.ToXML())
+	}
+
+	node, i := root.Find(&Node{Name: "keyword", Value: "class"})
+	if !(node != nil && i == 0) {
+		t.Errorf("expect node to have class keyword, but got:\n%v", root.ToXML())
+	}
+
+	if node, _ := root.Find(&Node{Name: "subroutineDec"}); node == nil {
+		t.Errorf("expect node to have subroutineDec, but got:\n%v", root.ToXML())
+	}
+
+	if len(tokens) > 0 {
+		t.Errorf("expect len(tokens) == 0, but actual: %v", len(tokens))
+	}
+}
