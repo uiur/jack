@@ -334,7 +334,7 @@ func parseWhileStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) 
 	node.AppendToken(tokens[1])
 
 	expression, rest := parseExpression(tokens[2:])
-	node.Children = append(node.Children, expression)
+	node.AppendChild(expression)
 
 	expect(rest[0], "symbol", ")")
 	node.AppendToken(rest[0])
@@ -343,7 +343,7 @@ func parseWhileStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) 
 	node.AppendToken(rest[1])
 
 	statements, rest := ParseStatements(rest[2:])
-	node.Children = append(node.Children, statements)
+	node.AppendChild(statements)
 
 	expect(rest[0], "symbol", "}")
 	node.AppendToken(rest[0])
@@ -497,8 +497,8 @@ func parseTerm(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 		node := &Node{Name: "term", Children: []*Node{}}
 		node.AppendToken(tokens[0])
 
-		expression, tokens := parseExpression(tokens[1:])
-		node.AppendChild(expression)
+		term, tokens := parseTerm(tokens[1:])
+		node.AppendChild(term)
 
 		return node, tokens
 	}
