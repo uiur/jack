@@ -106,8 +106,8 @@ func TestBuildSymbolTableFromSubroutine(t *testing.T) {
 	testScopeMatch(t, table.Scopes[0], map[string]*Symbol{
 		"Ax": {"int", "argument", 0},
 		"Ay": {"int", "argument", 1},
-		"a":  {"boolean", "var", 2},
-		"b":  {"boolean", "var", 3},
+		"a":  {"boolean", "local", 2},
+		"b":  {"boolean", "local", 3},
 	})
 }
 
@@ -123,4 +123,65 @@ func testScopeMatch(t *testing.T, scope, expectedScope map[string]*Symbol) {
 			t.Errorf("expect: %v, actual: %v", expectedScope, scope)
 		}
 	}
+}
+
+func TestCompile(t *testing.T) {
+	result := Compile(parser.Parse(tokenizer.Tokenize(`
+    class Main {
+      function void main() {
+        var SquareGame game;
+
+        let game = SquareGame.new();
+        do game.run();
+        do game.dispose();
+
+        return;
+      }
+    }`)))
+
+	vmCode := `
+    function Main.main 1
+      call SquareGame.new 0
+      pop local 0
+      push local 0
+      call SquareGame.run 1
+      pop temp 0
+      push local 0
+      call SquareGame.dispose 1
+      pop temp 0
+      push constant 0
+      return
+  `
+
+	compare(t, result, vmCode)
+}
+
+func compare(t *testing.T, code, expected string) {
+	codeLines := splitCode(code)
+	expectedCodeLines := splitCode(expected)
+
+	for i, expectedLine := range expectedCodeLines {
+		line := ""
+		if i < len(codeLines) {
+			line = codeLines[i]
+		}
+
+		if line != expectedLine {
+			t.Errorf("line %d: `%v`, want `%v`", i+1, line, expectedLine)
+			break
+		}
+	}
+}
+
+func splitCode(code string) []string {
+	var lines []string
+
+	for _, line := range strings.Split(code, "\n") {
+		line = strings.TrimSpace(line)
+		if len(line) > 0 {
+			lines = append(lines, line)
+		}
+	}
+
+	return lines
 }
