@@ -28,26 +28,6 @@ func main() {
 	fmt.Print(tree.ToXML())
 }
 
-// class Square {
-// 	field int x, y;
-// 	field int size;
-//
-// 	constructor Square new(int Ax, int Ay) {
-// 		var boolean a;
-//
-// 		let x = Ax;
-// 		let y = Ay;
-//
-// 		return this;
-// 	 }
-// }
-// SymbolTable
-// table.look("a") //=> {"local", "boolean", 0}
-// [
-// 	{Ax: {"argument", "int", 0}, Ay: {"argument", "int", 1}, a: {"local", "boolean", 2} },
-// 	{x: {"field", "int", 0}, y: {"field", "int", 1}, size: {"field", "int", 2}},
-// ]
-
 type Symbol struct {
 	// Kind: var, argument, static, field, class, subroutine
 	SymbolType, Kind string
