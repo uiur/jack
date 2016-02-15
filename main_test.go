@@ -7,6 +7,9 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/uiureo/jack/parser"
+	"github.com/uiureo/jack/tokenizer"
 )
 
 const toolPath = "/Users/zat/Downloads/nand2tetris/tools/TextComparer.sh"
@@ -27,16 +30,18 @@ func testMainOutput(t *testing.T, jackFile string) {
 
 	name := strings.Split(filepath.Base(jackFile), ".")[0]
 
-	output, err := exec.Command("go", "run", "main.go", jackFile).CombinedOutput()
+	code, err := ioutil.ReadFile(jackFile)
 	if err != nil {
-		t.Errorf("%s: %s %v", name, output, err)
+		t.Error(err)
 		return
 	}
 
-	file, _ := ioutil.TempFile("", "")
-	file.Write(output)
+	parserOutput := parser.Parse(tokenizer.Tokenize(string(code))).ToXML()
 
-	output, err = exec.Command(toolPath, file.Name(), xmlFile).CombinedOutput()
+	file, _ := ioutil.TempFile("", "")
+	file.Write([]byte(parserOutput))
+
+	output, err := exec.Command(toolPath, file.Name(), xmlFile).CombinedOutput()
 
 	if err != nil {
 		t.Errorf("%s: %s %v", name, output, err)
