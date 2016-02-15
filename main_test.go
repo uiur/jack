@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
@@ -74,7 +75,7 @@ func TestBuildSymbolTableFromClass(t *testing.T) {
 	expectedScope := map[string]*Symbol{
 		"x": {"int", "field", 0},
 		"y": {"int", "field", 1},
-		"s": {"String", "static", 2},
+		"s": {"String", "static", 0},
 	}
 
 	scope := table.Scopes[0]
@@ -106,8 +107,8 @@ func TestBuildSymbolTableFromSubroutine(t *testing.T) {
 	testScopeMatch(t, table.Scopes[0], map[string]*Symbol{
 		"Ax": {"int", "argument", 0},
 		"Ay": {"int", "argument", 1},
-		"a":  {"boolean", "local", 2},
-		"b":  {"boolean", "local", 3},
+		"a":  {"boolean", "local", 0},
+		"b":  {"boolean", "local", 1},
 	})
 }
 
@@ -120,12 +121,22 @@ func testScopeMatch(t *testing.T, scope, expectedScope map[string]*Symbol) {
 	for key, expectedSymbol := range expectedScope {
 		symbol := scope[key]
 		if !(symbol != nil && symbol.SymbolType == expectedSymbol.SymbolType && symbol.Kind == expectedSymbol.Kind && symbol.Number == expectedSymbol.Number) {
-			t.Errorf("expect: %v, actual: %v", expectedScope, scope)
+			t.Errorf("expect: %v, actual: %v", scopeToString(expectedScope), scopeToString(scope))
 		}
 	}
 }
 
-func TestCompile(t *testing.T) {
+func scopeToString(scope map[string]*Symbol) string {
+	result := []string{}
+
+	for name, symbol := range scope {
+		result = append(result, fmt.Sprintf("%v: %v", name, symbol))
+	}
+
+	return "{ " + strings.Join(result, ", ") + " }"
+}
+
+func TestCompileMain(t *testing.T) {
 	result := Compile(parser.Parse(tokenizer.Tokenize(`
     class Main {
       function void main() {
@@ -154,6 +165,28 @@ func TestCompile(t *testing.T) {
   `
 
 	compare(t, result, vmCode)
+}
+
+func TestCompileFunctionWithArgument(t *testing.T) {
+	result := Compile(parser.Parse(tokenizer.Tokenize(`
+    class Number {
+      function int plus(int a, int b) {
+        var int i;
+        let i = a + b;
+
+        return i;
+      }
+    }`)))
+
+	compare(t, result, `
+    function Number.plus 1
+    push argument 0
+    push argument 1
+    add
+    pop local 0
+    push local 0
+    return
+  `)
 }
 
 func compare(t *testing.T, code, expected string) {

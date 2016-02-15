@@ -72,6 +72,20 @@ func (table *SymbolTable) Get(name string) *Symbol {
 	return symbol
 }
 
+func (table *SymbolTable) Set(name string, symbol *Symbol) {
+	currentScope := table.Scopes[0]
+
+	kindCount := 0
+	for _, item := range currentScope {
+		if symbol.Kind == item.Kind {
+			kindCount++
+		}
+	}
+	symbol.Number = kindCount
+
+	currentScope[name] = symbol
+}
+
 // compileClass(node *Node, table *SymbolTable) string
 // compileSubroutineDec(node *Node, table *SymbolTable) string
 
@@ -88,6 +102,14 @@ func Compile(node *parser.Node) string {
 	}
 
 	return result
+}
+
+func pushSymbol(symbol *Symbol) string {
+	return fmt.Sprintf("push %s %d\n", symbol.Kind, symbol.Number)
+}
+
+func popSymbol(symbol *Symbol) string {
+	return fmt.Sprintf("pop %s %d\n", symbol.Kind, symbol.Number)
 }
 
 func compileSubroutineDec(node *parser.Node, table *SymbolTable, className string) string {
@@ -117,13 +139,10 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 				panic(fmt.Sprintf("variable `%v` is not defined", identifier.Value))
 			}
 
-			// FIXME:
 			expression, _ := statement.Find(&parser.Node{Name: "expression"})
-			term, _ := expression.Find(&parser.Node{Name: "term"})
+			result += pushExpression(expression, table)
 
-			result += compileTerm(term, table)
-
-			result += fmt.Sprintf("pop %s %d\n", symbol.Kind, symbol.Number)
+			result += popSymbol(symbol)
 
 		case "doStatement":
 			subroutineCall := &parser.Node{Name: "subroutineCall", Children: statement.Children[1 : len(statement.Children)-1]}
@@ -134,7 +153,7 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 			expression, _ := statement.Find(&parser.Node{Name: "expression"})
 
 			if expression != nil {
-				// TODO:
+				result += pushExpression(expression, table)
 			} else {
 				result += "push constant 0\n"
 			}
@@ -146,14 +165,51 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 	return result
 }
 
+func pushExpression(expression *parser.Node, table *SymbolTable) string {
+	leftTerm, _ := expression.Find(&parser.Node{Name: "term"})
+
+	result := compileTerm(leftTerm, table)
+
+	if len(expression.Children) > 1 {
+		operator := expression.Children[1]
+		expression.Children = expression.Children[2:]
+		result += pushExpression(expression, table)
+		result += compileOperator(operator.Value)
+	}
+
+	return result
+}
+
+func compileOperator(operator string) string {
+	switch operator {
+	case "+":
+		return "add\n"
+	case "-":
+		return "sub\n"
+	default:
+		return ""
+	}
+
+}
+
 func compileTerm(term *parser.Node, table *SymbolTable) string {
 	firstChild := term.Children[0]
+
 	lastChild := term.Children[len(term.Children)-1]
 
 	isSubroutineCall := !(firstChild.Name == "symbol" && firstChild.Value == "(") && (lastChild.Name == "symbol" && lastChild.Value == ")")
 
 	if isSubroutineCall {
 		return compileSubroutineCall(term, table)
+	}
+
+	switch firstChild.Name {
+	case "integerConstant":
+		return fmt.Sprintf("push constant %s\n", firstChild.Value)
+	case "identifier":
+		symbol := table.Get(firstChild.Value)
+
+		return pushSymbol(symbol)
 	}
 
 	return ""
@@ -222,7 +278,7 @@ func buildSymbolTable(node *parser.Node, base *SymbolTable) *SymbolTable {
 				}
 
 				for _, name := range names {
-					currentScope[name] = &Symbol{SymbolType: symbolType, Kind: kind, Number: len(currentScope)}
+					table.Set(name, &Symbol{SymbolType: symbolType, Kind: kind})
 				}
 			}
 		}
@@ -242,11 +298,7 @@ func buildSymbolTable(node *parser.Node, base *SymbolTable) *SymbolTable {
 				identifier := parameterList.Children[i+1]
 				name := identifier.Value
 
-				currentScope[name] = &Symbol{
-					SymbolType: keyword.Value,
-					Kind:       "argument",
-					Number:     len(currentScope),
-				}
+				table.Set(name, &Symbol{SymbolType: keyword.Value, Kind: "argument"})
 			}
 		}
 
@@ -263,11 +315,10 @@ func buildSymbolTable(node *parser.Node, base *SymbolTable) *SymbolTable {
 				}
 
 				for _, name := range names {
-					currentScope[name] = &Symbol{
+					table.Set(name, &Symbol{
 						SymbolType: symbolType,
 						Kind:       "local",
-						Number:     len(currentScope),
-					}
+					})
 				}
 			}
 		}
