@@ -22,21 +22,29 @@ func Compile(node *parser.Node) string {
 	return result
 }
 
+func symbolToSegment(symbol *Symbol) string {
+	if symbol.Kind == "field" {
+		return "this"
+	} else {
+		return symbol.Kind
+	}
+}
+
 func pushSymbol(symbol *Symbol) string {
-	return fmt.Sprintf("push %s %d\n", symbol.Kind, symbol.Number)
+	return fmt.Sprintf("push %s %d\n", symbolToSegment(symbol), symbol.Number)
 }
 
 func popSymbol(symbol *Symbol) string {
-	return fmt.Sprintf("pop %s %d\n", symbol.Kind, symbol.Number)
+	return fmt.Sprintf("pop %s %d\n", symbolToSegment(symbol), symbol.Number)
 }
 
 var labelCount = map[string]int{}
 
-func compileSubroutineDec(node *parser.Node, table *SymbolTable, className string) string {
+func compileSubroutineDec(node *parser.Node, classTable *SymbolTable, className string) string {
 	labelCount = map[string]int{}
 	result := ""
 
-	table = buildSymbolTable(node, table)
+	table := buildSymbolTable(node, classTable)
 	name := node.Children[2].Value
 
 	localVarCount := 0
@@ -47,6 +55,24 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 	}
 
 	result += fmt.Sprintf("function %s.%s %d\n", className, name, localVarCount)
+
+	subroutineType := node.Children[0].Value
+	switch subroutineType {
+	case "constructor":
+		fieldCount := 0
+		for _, symbol := range classTable.Scopes[0] {
+			if symbol.Kind == "field" {
+				fieldCount++
+			}
+		}
+
+		result += fmt.Sprintf("push constant %d\n", fieldCount)
+		result += "call Memory.alloc 1\n"
+		result += "pop pointer 0\n"
+	case "method":
+		result += "push argument 0\n"
+		result += "pop pointer 0\n"
+	}
 
 	subroutineBody, _ := node.Find(&parser.Node{Name: "subroutineBody"})
 	statements, _ := subroutineBody.Find(&parser.Node{Name: "statements"})
@@ -106,7 +132,6 @@ func pushStatements(statements *parser.Node, table *SymbolTable) string {
 			if len(ifStatementsList) > 1 {
 				ifStatements, elseStatements := ifStatementsList[0], ifStatementsList[1]
 
-				// TODO: unique label
 				result += pushExpression(ifExpression, table)
 				result += "if-goto " + trueLabel + "\n"
 				result += "goto " + falseLabel + "\n"
@@ -121,10 +146,10 @@ func pushStatements(statements *parser.Node, table *SymbolTable) string {
 
 				result += pushExpression(ifExpression, table)
 				result += "if-goto " + trueLabel + "\n"
-				result += "goto " + endLabel + "\n"
+				result += "goto " + falseLabel + "\n"
 				result += "label " + trueLabel + "\n"
 				result += pushStatements(ifStatements, table)
-				result += "label " + endLabel + "\n"
+				result += "label " + falseLabel + "\n"
 			}
 
 		case "whileStatement":
@@ -227,7 +252,7 @@ func compileTerm(term *parser.Node, table *SymbolTable) string {
 		case "false", "null":
 			return "push constant 0\n"
 		case "this":
-			panic("not implemented")
+			return "push pointer 0\n"
 		}
 	case "identifier":
 		symbol := table.Get(firstChild.Value)
@@ -254,16 +279,22 @@ func compileSubroutineCall(node *parser.Node, table *SymbolTable) string {
 
 	var functionName string
 	if i == 1 {
-		functionName = node.Children[0].Value
+		subroutineName := node.Children[0].Value
+		thisClassName := table.Find(&Symbol{Kind: "class"}).SymbolType
+
+		functionName = fmt.Sprintf("%s.%s", thisClassName, subroutineName)
+
+		result += "push pointer 0\n"
+		argSize++
 	} else if i == 3 {
 		classOrVarName := node.Children[0].Value
 
 		var className string
-		if symbol := table.Get(classOrVarName); symbol != nil {
+		if symbol := table.Get(classOrVarName); symbol != nil && symbol.Kind != "class" {
 			className = symbol.SymbolType
 			argSize++
 
-			result += fmt.Sprintf("push %v %v\n", symbol.Kind, symbol.Number)
+			result += pushSymbol(symbol)
 		} else {
 			className = classOrVarName
 		}
@@ -303,6 +334,11 @@ func buildSymbolTable(node *parser.Node, base *SymbolTable) *SymbolTable {
 
 	switch node.Name {
 	case "class":
+		identifier, _ := node.Find(&parser.Node{Name: "identifier"})
+		className := identifier.Value
+
+		table.Set(className, &Symbol{Kind: "class", SymbolType: className})
+
 		for _, node := range node.Children {
 			if node.Name == "classVarDec" {
 				kind := node.Children[0].Value

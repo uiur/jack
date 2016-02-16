@@ -26,6 +26,30 @@ func (table *SymbolTable) Get(name string) *Symbol {
 	return symbol
 }
 
+func (table *SymbolTable) FindAll(query *Symbol) []*Symbol {
+	result := []*Symbol{}
+
+	for _, scope := range table.Scopes {
+		for _, symbol := range scope {
+			if symbol.Kind == query.Kind {
+				result = append(result, symbol)
+			}
+		}
+	}
+
+	return result
+}
+
+func (table *SymbolTable) Find(query *Symbol) *Symbol {
+	symbols := table.FindAll(query)
+
+	if len(symbols) > 0 {
+		return symbols[0]
+	}
+
+	return nil
+}
+
 func (table *SymbolTable) Set(name string, symbol *Symbol) {
 	currentScope := table.Scopes[0]
 

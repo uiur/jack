@@ -35,9 +35,10 @@ func TestBuildSymbolTableFromClass(t *testing.T) {
 	}
 
 	expectedScope := map[string]*Symbol{
-		"x": {"int", "field", 0},
-		"y": {"int", "field", 1},
-		"s": {"String", "static", 0},
+		"Square": {"Square", "class", 0},
+		"x":      {"int", "field", 0},
+		"y":      {"int", "field", 1},
+		"s":      {"String", "static", 0},
 	}
 
 	scope := table.Scopes[0]
@@ -75,9 +76,10 @@ func TestBuildSymbolTableFromSubroutine(t *testing.T) {
 	})
 
 	testScopeMatch(t, table.Scopes[1], map[string]*Symbol{
-		"x": {"int", "field", 0},
-		"y": {"int", "field", 1},
-		"s": {"String", "static", 0},
+		"Square": {"Square", "class", 0},
+		"x":      {"int", "field", 0},
+		"y":      {"int", "field", 1},
+		"s":      {"String", "static", 0},
 	})
 }
 
@@ -133,7 +135,7 @@ func TestCompileMain(t *testing.T) {
       return
   `
 
-	compare(t, result, vmCode)
+	compare(t, "", result, vmCode)
 }
 
 func TestCompileFunctionWithArgument(t *testing.T) {
@@ -147,7 +149,7 @@ func TestCompileFunctionWithArgument(t *testing.T) {
       }
     }`)))
 
-	compare(t, result, `
+	compare(t, "", result, `
     function Number.plus 1
     push argument 0
     push argument 1
@@ -186,7 +188,7 @@ func testCompileFiles(t *testing.T, pattern string) {
 		jackData, _ := ioutil.ReadFile(jackFile)
 		compiled := compile(string(jackData))
 
-		compare(t, compiled, string(vmData))
+		compare(t, name, compiled, string(vmData))
 	}
 }
 
@@ -194,7 +196,7 @@ func compile(source string) string {
 	return Compile(parser.Parse(tokenizer.Tokenize(source)))
 }
 
-func compare(t *testing.T, code, expected string) {
+func compare(t *testing.T, name, code, expected string) {
 	codeLines := splitCode(code)
 	expectedCodeLines := splitCode(expected)
 
@@ -210,7 +212,7 @@ func compare(t *testing.T, code, expected string) {
 		}
 
 		if line != expectedLine {
-			t.Errorf("line %d: `%v`, want `%v`", i+1, line, expectedLine)
+			t.Errorf("%v: line %d: `%v`, want `%v`", name, i+1, line, expectedLine)
 			break
 		}
 	}
