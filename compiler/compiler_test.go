@@ -172,6 +172,10 @@ func TestCompileSquare(t *testing.T) {
 	testCompileFiles(t, "./fixtures/Square/*.jack")
 }
 
+func TestCompileAverage(t *testing.T) {
+	testCompileFiles(t, "./fixtures/Average/*.jack")
+}
+
 func testCompileFiles(t *testing.T, pattern string) {
 	jackFiles, _ := filepath.Glob(pattern)
 
