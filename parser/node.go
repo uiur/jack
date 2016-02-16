@@ -28,9 +28,9 @@ func (n *Node) AppendChild(node *Node) {
 	n.Children = append(n.Children, node)
 }
 
-func (n *Node) Find(node *Node) (*Node, int) {
-	for i, childNode := range n.Children {
-		if childNode.Name == node.Name && (len(node.Value) == 0 || childNode.Value == node.Value) {
+func (node *Node) Find(query *Node) (*Node, int) {
+	for i, childNode := range node.Children {
+		if childNode.Name == query.Name && (len(query.Value) == 0 || childNode.Value == query.Value) {
 			return childNode, i
 		}
 	}

@@ -140,7 +140,7 @@ func compileTerm(term *parser.Node, table *SymbolTable) string {
 		return pushSymbol(symbol)
 	case "symbol":
 		if firstChild.Value == "(" {
-			expression, _ := firstChild.Find(&parser.Node{Name: "expression"})
+			expression, _ := term.Find(&parser.Node{Name: "expression"})
 			return pushExpression(expression, table)
 		}
 	}
