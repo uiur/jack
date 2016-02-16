@@ -2,6 +2,8 @@ package compiler
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -147,6 +149,24 @@ func TestCompileFunctionWithArgument(t *testing.T) {
     push local 0
     return
   `)
+}
+
+func TestCompileFiles(t *testing.T) {
+	jackFiles, _ := filepath.Glob("./fixtures/*/*.jack")
+
+	for _, jackFile := range jackFiles {
+		vmFile := strings.Split(jackFile, ".")[1] + ".vm"
+		vmData, _ := ioutil.ReadFile(vmFile)
+
+		jackData, _ := ioutil.ReadFile(jackFile)
+		compiled := compile(string(jackData))
+
+		compare(t, compiled, string(vmData))
+	}
+}
+
+func compile(source string) string {
+	return Compile(parser.Parse(tokenizer.Tokenize(source)))
 }
 
 func compare(t *testing.T, code, expected string) {
