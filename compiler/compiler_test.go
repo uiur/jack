@@ -151,11 +151,25 @@ func TestCompileFunctionWithArgument(t *testing.T) {
   `)
 }
 
-func TestCompileFiles(t *testing.T) {
-	jackFiles, _ := filepath.Glob("./fixtures/*/*.jack")
+func TestCompileSeven(t *testing.T) {
+	testCompileFiles(t, "./fixtures/Seven/*.jack")
+}
+
+func TestCompileConvertToBin(t *testing.T) {
+	testCompileFiles(t, "./fixtures/ConvertToBin/*.jack")
+}
+
+func testCompileFiles(t *testing.T, pattern string) {
+	jackFiles, _ := filepath.Glob(pattern)
+
+	if len(jackFiles) == 0 {
+		t.Error("no files found")
+		return
+	}
 
 	for _, jackFile := range jackFiles {
-		vmFile := strings.Split(jackFile, ".")[1] + ".vm"
+		name := strings.Split(filepath.Base(jackFile), ".")[0]
+		vmFile := filepath.Dir(jackFile) + "/" + name + ".vm"
 		vmData, _ := ioutil.ReadFile(vmFile)
 
 		jackData, _ := ioutil.ReadFile(jackFile)
@@ -172,6 +186,11 @@ func compile(source string) string {
 func compare(t *testing.T, code, expected string) {
 	codeLines := splitCode(code)
 	expectedCodeLines := splitCode(expected)
+
+	if len(expectedCodeLines) == 0 {
+		t.Error("no code specified")
+		return
+	}
 
 	for i, expectedLine := range expectedCodeLines {
 		line := ""
