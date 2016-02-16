@@ -103,10 +103,11 @@ func compileOperator(operator string) string {
 		return "add\n"
 	case "-":
 		return "sub\n"
+	case "*":
+		return "call Math.multiply 2\n"
 	default:
 		return ""
 	}
-
 }
 
 func compileTerm(term *parser.Node, table *SymbolTable) string {
@@ -127,6 +128,11 @@ func compileTerm(term *parser.Node, table *SymbolTable) string {
 		symbol := table.Get(firstChild.Value)
 
 		return pushSymbol(symbol)
+	case "symbol":
+		if firstChild.Value == "(" {
+			expression, _ := firstChild.Find(&parser.Node{Name: "expression"})
+			return pushExpression(expression, table)
+		}
 	}
 
 	return ""
@@ -159,8 +165,12 @@ func compileSubroutineCall(node *parser.Node, table *SymbolTable) string {
 	}
 
 	expressionList, _ := node.Find(&parser.Node{Name: "expressionList"})
-	argSize += len(expressionList.Children)
 
+	for _, expression := range expressionList.Children {
+		result += pushExpression(expression, table)
+	}
+
+	argSize += len(expressionList.Children)
 	result += fmt.Sprintf("call %s %d\n", functionName, argSize)
 
 	return result

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/uiureo/jack/compiler"
 	"github.com/uiureo/jack/parser"
 	"github.com/uiureo/jack/tokenizer"
 )
@@ -25,5 +26,5 @@ func main() {
 	tokens := tokenizer.Tokenize(string(data))
 	tree := parser.Parse(tokens)
 
-	fmt.Print(tree.ToXML())
+	fmt.Print(compiler.Compile(tree))
 }
