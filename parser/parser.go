@@ -304,7 +304,7 @@ func parseIfStatement(tokens []*tokenizer.Token) (*Node, []*tokenizer.Token) {
 		expect(rest[1], "symbol", "{")
 		node.AppendToken(rest[1])
 
-		statements, rest := ParseStatements(rest[2:])
+		statements, rest = ParseStatements(rest[2:])
 		node.Children = append(node.Children, statements)
 
 		expect(rest[0], "symbol", "}")
