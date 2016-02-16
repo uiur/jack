@@ -64,13 +64,20 @@ func TestBuildSymbolTableFromSubroutine(t *testing.T) {
 
 	subroutineDec, _ := node.Find(&parser.Node{Name: "subroutineDec"})
 
-	table := buildSymbolTable(subroutineDec, nil)
+	classTable := buildSymbolTable(node, nil)
+	table := buildSymbolTable(subroutineDec, classTable)
 
 	testScopeMatch(t, table.Scopes[0], map[string]*Symbol{
 		"Ax": {"int", "argument", 0},
 		"Ay": {"int", "argument", 1},
 		"a":  {"boolean", "local", 0},
 		"b":  {"boolean", "local", 1},
+	})
+
+	testScopeMatch(t, table.Scopes[1], map[string]*Symbol{
+		"x": {"int", "field", 0},
+		"y": {"int", "field", 1},
+		"s": {"String", "static", 0},
 	})
 }
 

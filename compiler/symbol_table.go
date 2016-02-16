@@ -1,5 +1,7 @@
 package compiler
 
+import "fmt"
+
 type Symbol struct {
 	// Kind: var, argument, static, field, class, subroutine
 	SymbolType, Kind string
@@ -36,4 +38,12 @@ func (table *SymbolTable) Set(name string, symbol *Symbol) {
 	symbol.Number = kindCount
 
 	currentScope[name] = symbol
+}
+
+func (table *SymbolTable) String() string {
+	result := ""
+	for _, scope := range table.Scopes {
+		result += fmt.Sprint(scope) + "\n"
+	}
+	return result
 }

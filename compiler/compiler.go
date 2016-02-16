@@ -72,7 +72,7 @@ func pushStatements(statements *parser.Node, table *SymbolTable) string {
 			identifier, _ := statement.Find(&parser.Node{Name: "identifier"})
 			symbol := table.Get(identifier.Value)
 			if symbol == nil {
-				panic(fmt.Sprintf("variable `%v` is not defined", identifier.Value))
+				panic(fmt.Sprintf("variable `%v` is not defined: %v\n%v", identifier.Value, table.String(), statements.ToXML()))
 			}
 
 			expression, _ := statement.Find(&parser.Node{Name: "expression"})
@@ -296,7 +296,7 @@ func buildSymbolTable(node *parser.Node, base *SymbolTable) *SymbolTable {
 
 	currentScope := map[string]*Symbol{}
 
-	baseScopes := []map[string]*Symbol{}
+	baseScopes := make([]map[string]*Symbol, len(base.Scopes))
 	copy(baseScopes, base.Scopes)
 
 	table.Scopes = append([]map[string]*Symbol{currentScope}, baseScopes...)
