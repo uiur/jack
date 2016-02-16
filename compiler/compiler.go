@@ -120,6 +120,17 @@ func compileOperator(operator string) string {
 	}
 }
 
+func compileUnaryOperator(operator string) string {
+	switch operator {
+	case "-":
+		return "neg\n"
+	case "~":
+		return "not\n"
+	default:
+		return ""
+	}
+}
+
 func compileTerm(term *parser.Node, table *SymbolTable) string {
 	firstChild := term.Children[0]
 
@@ -134,14 +145,27 @@ func compileTerm(term *parser.Node, table *SymbolTable) string {
 	switch firstChild.Name {
 	case "integerConstant":
 		return fmt.Sprintf("push constant %s\n", firstChild.Value)
+	case "keyword":
+		switch firstChild.Value {
+		case "true":
+			return "push constant 0\nnot\n"
+		case "false", "null":
+			return "push constant 0\n"
+		case "this":
+			panic("not implemented")
+		}
 	case "identifier":
 		symbol := table.Get(firstChild.Value)
 
 		return pushSymbol(symbol)
 	case "symbol":
-		if firstChild.Value == "(" {
+		switch firstChild.Value {
+		case "(":
 			expression, _ := term.Find(&parser.Node{Name: "expression"})
 			return pushExpression(expression, table)
+		case "-", "~":
+			childTerm, _ := term.Find(&parser.Node{Name: "term"})
+			return compileTerm(childTerm, table) + compileUnaryOperator(firstChild.Value)
 		}
 	}
 
@@ -182,7 +206,7 @@ func compileSubroutineCall(node *parser.Node, table *SymbolTable) string {
 		result += pushExpression(expression, table)
 	}
 
-	argSize += len(expressionList.Children)
+	argSize += len(expressions)
 	result += fmt.Sprintf("call %s %d\n", functionName, argSize)
 
 	return result
