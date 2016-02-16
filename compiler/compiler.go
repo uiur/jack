@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/uiureo/jack/parser"
 )
@@ -52,6 +53,15 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 	return result
 }
 
+var labelCount = map[string]int{}
+
+func uniqueLabel(base string) string {
+	count := labelCount[base]
+	labelCount[base]++
+
+	return base + strconv.Itoa(count)
+}
+
 func pushStatements(statements *parser.Node, table *SymbolTable) string {
 	result := ""
 
@@ -88,42 +98,48 @@ func pushStatements(statements *parser.Node, table *SymbolTable) string {
 			ifExpression, _ := statement.Find(&parser.Node{Name: "expression"})
 			ifStatementsList := statement.FindAll(&parser.Node{Name: "statements"})
 
+			trueLabel := uniqueLabel("IF_TRUE")
+			falseLabel := uniqueLabel("IF_FALSE")
+			endLabel := uniqueLabel("IF_END")
+
 			if len(ifStatementsList) > 1 {
 				ifStatements, elseStatements := ifStatementsList[0], ifStatementsList[1]
 
 				// TODO: unique label
 				result += pushExpression(ifExpression, table)
-				result += "if-goto IF_TRUE0\n"
-				result += "goto IF_FALSE0\n"
-				result += "label IF_TRUE0\n"
+				result += "if-goto " + trueLabel + "\n"
+				result += "goto " + falseLabel + "\n"
+				result += "label " + trueLabel + "\n"
 				result += pushStatements(ifStatements, table)
-				result += "goto IF_END0\n"
-				result += "label IF_FALSE0\n"
+				result += "goto " + endLabel + "\n"
+				result += "label " + falseLabel + "\n"
 				result += pushStatements(elseStatements, table)
-				result += "label IF_END0\n"
+				result += "label " + endLabel + "\n"
 			} else {
 				ifStatements := ifStatementsList[0]
 
 				result += pushExpression(ifExpression, table)
-				result += "if-goto IF_TRUE0\n"
-				result += "goto IF_END0\n"
-				result += "label IF_TRUE0\n"
+				result += "if-goto " + trueLabel + "\n"
+				result += "goto " + endLabel + "\n"
+				result += "label " + trueLabel + "\n"
 				result += pushStatements(ifStatements, table)
-				result += "label IF_END0\n"
+				result += "label " + endLabel + "\n"
 			}
 
 		case "whileStatement":
-			// TODO: unique label
-			result += "label WHILE_EXP0\n"
+			expLabel := uniqueLabel("WHILE_EXP")
+			endLabel := uniqueLabel("WHILE_END")
+
+			result += "label " + expLabel + "\n"
 			whileExpression, _ := statement.Find(&parser.Node{Name: "expression"})
 			result += pushExpression(whileExpression, table)
 			result += "not\n"
-			result += "if-goto WHILE_END0\n"
+			result += "if-goto " + endLabel + "\n"
 
 			whileBody, _ := statement.Find(&parser.Node{Name: "statements"})
 			result += pushStatements(whileBody, table)
-			result += "goto WHILE_EXP0\n"
-			result += "label WHILE_END0\n"
+			result += "goto " + expLabel + "\n"
+			result += "label " + endLabel + "\n"
 		}
 	}
 
