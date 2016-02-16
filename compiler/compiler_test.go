@@ -166,6 +166,10 @@ func TestCompileConvertToBin(t *testing.T) {
 	testCompileFiles(t, "./fixtures/ConvertToBin/*.jack")
 }
 
+func TestCompileSquare(t *testing.T) {
+	testCompileFiles(t, "./fixtures/Square/*.jack")
+}
+
 func testCompileFiles(t *testing.T, pattern string) {
 	jackFiles, _ := filepath.Glob(pattern)
 
