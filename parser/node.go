@@ -38,6 +38,18 @@ func (n *Node) Find(node *Node) (*Node, int) {
 	return nil, 0
 }
 
+func (node *Node) FindAll(query *Node) []*Node {
+	result := []*Node{}
+
+	for _, childNode := range node.Children {
+		if childNode.Name == query.Name && (len(query.Value) == 0 || childNode.Value == query.Value) {
+			result = append(result, childNode)
+		}
+	}
+
+	return result
+}
+
 func generateXMLWithIndent(node *Node, indent int) string {
 	if node == nil {
 		return "nil"

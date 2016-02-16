@@ -83,6 +83,14 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 }
 
 func pushExpression(expression *parser.Node, table *SymbolTable) string {
+	if expression == nil {
+		panic("argument must not be nil")
+	}
+
+	if expression.Name != "expression" {
+		panic(fmt.Sprintf("argument must be `expression`, but actual: %v", expression.ToXML()))
+	}
+
 	leftTerm, _ := expression.Find(&parser.Node{Name: "term"})
 
 	result := compileTerm(leftTerm, table)
@@ -105,6 +113,8 @@ func compileOperator(operator string) string {
 		return "sub\n"
 	case "*":
 		return "call Math.multiply 2\n"
+	case "/":
+		return "call Math.divide 2\n"
 	default:
 		return ""
 	}
@@ -166,7 +176,9 @@ func compileSubroutineCall(node *parser.Node, table *SymbolTable) string {
 
 	expressionList, _ := node.Find(&parser.Node{Name: "expressionList"})
 
-	for _, expression := range expressionList.Children {
+	expressions := expressionList.FindAll(&parser.Node{Name: "expression"})
+
+	for _, expression := range expressions {
 		result += pushExpression(expression, table)
 	}
 
