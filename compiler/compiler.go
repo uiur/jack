@@ -47,6 +47,14 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 	subroutineBody, _ := node.Find(&parser.Node{Name: "subroutineBody"})
 	statements, _ := subroutineBody.Find(&parser.Node{Name: "statements"})
 
+	result += pushStatements(statements, table)
+
+	return result
+}
+
+func pushStatements(statements *parser.Node, table *SymbolTable) string {
+	result := ""
+
 	for _, statement := range statements.Children {
 		switch statement.Name {
 		case "letStatement":
@@ -76,6 +84,46 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 			}
 
 			result += "return\n"
+		case "ifStatement":
+			ifExpression, _ := statement.Find(&parser.Node{Name: "expression"})
+			ifStatementsList := statement.FindAll(&parser.Node{Name: "statements"})
+
+			if len(ifStatementsList) > 1 {
+				ifStatements, elseStatements := ifStatementsList[0], ifStatementsList[1]
+
+				// TODO: unique label
+				result += pushExpression(ifExpression, table)
+				result += "if-goto IF_TRUE0\n"
+				result += "goto IF_FALSE0\n"
+				result += "label IF_TRUE0\n"
+				result += pushStatements(ifStatements, table)
+				result += "goto IF_END0\n"
+				result += "label IF_FALSE0\n"
+				result += pushStatements(elseStatements, table)
+				result += "label IF_END0\n"
+			} else {
+				ifStatements := ifStatementsList[0]
+
+				result += pushExpression(ifExpression, table)
+				result += "if-goto IF_TRUE0\n"
+				result += "goto IF_END0\n"
+				result += "label IF_TRUE0\n"
+				result += pushStatements(ifStatements, table)
+				result += "label IF_END0\n"
+			}
+
+		case "whileStatement":
+			// TODO: unique label
+			result += "label WHILE_EXP0\n"
+			whileExpression, _ := statement.Find(&parser.Node{Name: "expression"})
+			result += pushExpression(whileExpression, table)
+			result += "not\n"
+			result += "if-goto WHILE_END0\n"
+
+			whileBody, _ := statement.Find(&parser.Node{Name: "statements"})
+			result += pushStatements(whileBody, table)
+			result += "goto WHILE_EXP0\n"
+			result += "label WHILE_END0\n"
 		}
 	}
 
@@ -115,6 +163,16 @@ func compileOperator(operator string) string {
 		return "call Math.multiply 2\n"
 	case "/":
 		return "call Math.divide 2\n"
+	case "<":
+		return "lt\n"
+	case ">":
+		return "gt\n"
+	case "&":
+		return "and\n"
+	case "|":
+		return "or\n"
+	case "=":
+		return "eq\n"
 	default:
 		return ""
 	}
