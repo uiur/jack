@@ -30,7 +30,10 @@ func popSymbol(symbol *Symbol) string {
 	return fmt.Sprintf("pop %s %d\n", symbol.Kind, symbol.Number)
 }
 
+var labelCount = map[string]int{}
+
 func compileSubroutineDec(node *parser.Node, table *SymbolTable, className string) string {
+	labelCount = map[string]int{}
 	result := ""
 
 	table = buildSymbolTable(node, table)
@@ -52,8 +55,6 @@ func compileSubroutineDec(node *parser.Node, table *SymbolTable, className strin
 
 	return result
 }
-
-var labelCount = map[string]int{}
 
 func uniqueLabel(base string) string {
 	count := labelCount[base]
