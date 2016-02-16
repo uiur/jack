@@ -16,7 +16,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	parseMode := os.Args[1] == "parse"
+
 	filename := os.Args[1]
+	if parseMode {
+		filename = os.Args[2]
+	}
+
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -26,5 +32,9 @@ func main() {
 	tokens := tokenizer.Tokenize(string(data))
 	tree := parser.Parse(tokens)
 
-	fmt.Print(compiler.Compile(tree))
+	if parseMode {
+		fmt.Print(tree.ToXML())
+	} else {
+		fmt.Print(compiler.Compile(tree))
+	}
 }
