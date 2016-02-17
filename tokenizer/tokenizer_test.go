@@ -44,6 +44,7 @@ func testTokensMatch(t *testing.T, tokens []*Token, expected [][]string) {
 func TestTokenizeSubroutineCall(t *testing.T) {
 	tokens := Tokenize(`
 		do Output.printString();
+		do Main.double();
 	`)
 
 	expected := [][]string{
@@ -51,6 +52,13 @@ func TestTokenizeSubroutineCall(t *testing.T) {
 		{"Output", "identifier"},
 		{".", "symbol"},
 		{"printString", "identifier"},
+		{"(", "symbol"},
+		{")", "symbol"},
+		{";", "symbol"},
+		{"do", "keyword"},
+		{"Main", "identifier"},
+		{".", "symbol"},
+		{"double", "identifier"},
 		{"(", "symbol"},
 		{")", "symbol"},
 		{";", "symbol"},

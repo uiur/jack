@@ -103,7 +103,6 @@ func Tokenize(source string) []*Token {
 	tokenRegexpMap := buildTokenRegexpMap()
 	tokenRegexp := regexp.MustCompile(
 		strings.Join([]string{
-			tokenRegexpMap["keyword"],
 			tokenRegexpMap["symbol"],
 			tokenRegexpMap["integerConstant"],
 			tokenRegexpMap["stringConstant"],
