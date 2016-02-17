@@ -402,6 +402,10 @@ func buildSymbolTable(node *parser.Node, base *SymbolTable) *SymbolTable {
 			}
 		}
 	case "subroutineDec":
+		if node.Children[0].Value == "method" {
+			table.Set("this", &Symbol{SymbolType: "this", Kind: "argument"})
+		}
+
 		var parameterList *parser.Node
 
 		for _, node := range node.Children {
