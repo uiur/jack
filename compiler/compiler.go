@@ -101,10 +101,23 @@ func pushStatements(statements *parser.Node, table *SymbolTable) string {
 				panic(fmt.Sprintf("variable `%v` is not defined: %v\n%v", identifier.Value, table.String(), statements.ToXML()))
 			}
 
-			expression, _ := statement.Find(&parser.Node{Name: "expression"})
-			result += pushExpression(expression, table)
+			bracket, _ := statement.Find(&parser.Node{Name: "symbol", Value: "["})
+			if bracket != nil {
+				expressions := statement.FindAll(&parser.Node{Name: "expression"})
+				result += pushExpression(expressions[0], table)
+				result += pushSymbol(symbol)
+				result += "add\n"
+				result += pushExpression(expressions[1], table)
+				result += "pop temp 0\n"
+				result += "pop pointer 1\n"
+				result += "push temp 0\n"
+				result += "pop that 0\n"
+			} else {
+				expression, _ := statement.Find(&parser.Node{Name: "expression"})
+				result += pushExpression(expression, table)
 
-			result += popSymbol(symbol)
+				result += popSymbol(symbol)
+			}
 
 		case "doStatement":
 			subroutineCall := &parser.Node{Name: "subroutineCall", Children: statement.Children[1 : len(statement.Children)-1]}

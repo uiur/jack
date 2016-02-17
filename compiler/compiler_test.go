@@ -216,7 +216,7 @@ func compare(t *testing.T, name, code, expected string) {
 		}
 
 		if line != expectedLine {
-			t.Errorf("%v: line %d: `%v`, want `%v`", name, i+1, line, expectedLine)
+			t.Errorf("%v:%d: `%v`, want `%v`", name, i+1, line, expectedLine)
 			break
 		}
 	}
