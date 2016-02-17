@@ -25,9 +25,9 @@ func Compile(node *parser.Node) string {
 func symbolToSegment(symbol *Symbol) string {
 	if symbol.Kind == "field" {
 		return "this"
-	} else {
-		return symbol.Kind
 	}
+
+	return symbol.Kind
 }
 
 func pushSymbol(symbol *Symbol) string {
@@ -245,6 +245,8 @@ func compileTerm(term *parser.Node, table *SymbolTable) string {
 	switch firstChild.Name {
 	case "integerConstant":
 		return fmt.Sprintf("push constant %s\n", firstChild.Value)
+	case "stringConstant":
+		return pushString(firstChild.Value)
 	case "keyword":
 		switch firstChild.Value {
 		case "true":
@@ -270,6 +272,21 @@ func compileTerm(term *parser.Node, table *SymbolTable) string {
 	}
 
 	return ""
+}
+
+func pushString(str string) string {
+	result := ""
+
+	size := len(str)
+	result += fmt.Sprintf("push constant %d\n", size)
+	result += "call String.new 1\n"
+
+	for _, ch := range str {
+		result += fmt.Sprintf("push constant %d\n", rune(ch))
+		result += "call String.appendChar 2\n"
+	}
+
+	return result
 }
 
 func compileSubroutineCall(node *parser.Node, table *SymbolTable) string {
