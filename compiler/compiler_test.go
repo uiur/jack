@@ -52,7 +52,7 @@ func TestBuildSymbolTableFromSubroutine(t *testing.T) {
     	field int x, y;
     	static String s;
 
-    	constructor Square new(int Ax, int Ay) {
+    	constructor Square new(int Ax, int Ay, Array ary) {
     		var boolean a, b;
 
     		let x = Ax;
@@ -69,10 +69,11 @@ func TestBuildSymbolTableFromSubroutine(t *testing.T) {
 	table := buildSymbolTable(subroutineDec, classTable)
 
 	testScopeMatch(t, table.Scopes[0], map[string]*Symbol{
-		"Ax": {"int", "argument", 0},
-		"Ay": {"int", "argument", 1},
-		"a":  {"boolean", "local", 0},
-		"b":  {"boolean", "local", 1},
+		"Ax":  {"int", "argument", 0},
+		"Ay":  {"int", "argument", 1},
+		"ary": {"Array", "argument", 2},
+		"a":   {"boolean", "local", 0},
+		"b":   {"boolean", "local", 1},
 	})
 
 	testScopeMatch(t, table.Scopes[1], map[string]*Symbol{

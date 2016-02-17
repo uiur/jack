@@ -415,14 +415,12 @@ func buildSymbolTable(node *parser.Node, base *SymbolTable) *SymbolTable {
 			}
 		}
 
-		for i, node := range parameterList.Children {
-			if node.Name == "keyword" {
-				keyword := node
-				identifier := parameterList.Children[i+1]
-				name := identifier.Value
+		for i := 0; i < len(parameterList.Children); i += 3 {
+			typeNode := parameterList.Children[i]
+			identifier := parameterList.Children[i+1]
+			name := identifier.Value
 
-				table.Set(name, &Symbol{SymbolType: keyword.Value, Kind: "argument"})
-			}
+			table.Set(name, &Symbol{SymbolType: typeNode.Value, Kind: "argument"})
 		}
 
 		subroutineBody, _ := node.Find(&parser.Node{Name: "subroutineBody"})
