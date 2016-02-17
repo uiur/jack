@@ -180,6 +180,10 @@ func TestCompilePong(t *testing.T) {
 	testCompileFiles(t, "./fixtures/Pong/*.jack")
 }
 
+func TestCompileComplexArrays(t *testing.T) {
+	testCompileFiles(t, "./fixtures/ComplexArrays/*.jack")
+}
+
 func testCompileFiles(t *testing.T, pattern string) {
 	jackFiles, _ := filepath.Glob(pattern)
 
