@@ -176,6 +176,10 @@ func TestCompileAverage(t *testing.T) {
 	testCompileFiles(t, "./fixtures/Average/*.jack")
 }
 
+func TestCompilePong(t *testing.T) {
+	testCompileFiles(t, "./fixtures/Pong/*.jack")
+}
+
 func testCompileFiles(t *testing.T, pattern string) {
 	jackFiles, _ := filepath.Glob(pattern)
 
