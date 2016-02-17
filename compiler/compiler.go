@@ -272,7 +272,22 @@ func compileTerm(term *parser.Node, table *SymbolTable) string {
 	case "identifier":
 		symbol := table.Get(firstChild.Value)
 
+		bracket, _ := term.Find(&parser.Node{Name: "symbol", Value: "["})
+		if bracket != nil {
+			result := ""
+
+			expression, _ := term.Find(&parser.Node{Name: "expression"})
+			result += pushExpression(expression, table)
+			result += pushSymbol(symbol)
+			result += "add\n"
+			result += "pop pointer 1\n"
+			result += "push that 0\n"
+
+			return result
+		}
+
 		return pushSymbol(symbol)
+
 	case "symbol":
 		switch firstChild.Value {
 		case "(":
